@@ -4,15 +4,12 @@
 import logging
 import time
 import random
-from threading import Lock
-from timeit import default_timer
 
 from pgoapi import PGoApi
 from pgoapi.exceptions import AuthException
 
 from .fakePogoApi import FakePogoApi
-from .utils import (in_radius, generate_device_info, equi_rect_distance,
-                    clear_dict_response)
+from .utils import (in_radius, generate_device_info, clear_dict_response)
 from .proxy import get_new_proxy
 
 log = logging.getLogger(__name__)
@@ -147,7 +144,13 @@ def rpc_login_sequence(args, api, account):
     try:
         req = api.create_request()
         req.get_player(player_locale=args.player_locale)
-        req.call(False)
+        response = req.call(False)
+
+        account['tutorial_state'] = get_tutorial_state(args, response)
+        if response['responses']['GET_PLAYER'].get('warn', False):
+            account['warn'] = True
+        if response['responses']['GET_PLAYER'].get('banned', False):
+            account['banned'] = True
 
         total_req += 1
         time.sleep(random.uniform(.53, 1.1))
@@ -370,16 +373,9 @@ def rpc_login_sequence(args, api, account):
 
 # Check if all important tutorial steps have been completed.
 # API argument needs to be a logged in API instance.
-def get_tutorial_state(args, api, account):
-    log.debug('Checking tutorial state for %s.', account['username'])
-    request = api.create_request()
-    request.get_player(
-        player_locale=args.player_locale)
-    response = request.call(False).get('responses', {})
-    if 'GET_PLAYER' not in response:
-        return []
-    tutorial_state = response['GET_PLAYER'].player_data.tutorial_state
-    time.sleep(random.uniform(2, 4))
+def get_tutorial_state(args, response):
+    get_player = response.get('responses', {}).get('GET_PLAYER', {})
+    tutorial_state = get_player.player_data.tutorial_state
     return tutorial_state
 
 
@@ -675,92 +671,3 @@ def parse_new_timestamp_ms(account, api_response):
         player_level = get_player_level(api_response)
         if player_level:
             account['level'] = player_level
-
-
-# The AccountSet returns a scheduler that cycles through different
-# sets of accounts (e.g. L30). Each set is defined at runtime, and is
-# (currently) used to separate regular accounts from L30 accounts.
-# TODO: Migrate the old account Queue to a real AccountScheduler, preferably
-# handled globally via database instead of per instance.
-# TODO: Accounts in the AccountSet are exempt from things like the
-# account recycler thread. We could've hardcoded support into it, but that
-# would have added to the amount of ugly code. Instead, we keep it as is
-# until we have a proper account manager.
-class AccountSet(object):
-
-    def __init__(self, kph):
-        self.sets = {}
-
-        # Scanning limits.
-        self.kph = kph
-
-        # Thread safety.
-        self.next_lock = Lock()
-
-    # Set manipulation.
-    def create_set(self, name, values=None):
-        if values is None:
-            values = []
-        if name in self.sets:
-            raise Exception('Account set ' + name + ' is being created twice.')
-
-        self.sets[name] = values
-
-    # Release an account back to the pool after it was used.
-    def release(self, account):
-        if 'in_use' not in account:
-            log.error('Released account %s back to the AccountSet,'
-                      + " but it wasn't locked.",
-                      account['username'])
-        else:
-            account['in_use'] = False
-
-    # Get next account that is ready to be used for scanning.
-    def next(self, set_name, coords_to_scan):
-        # Yay for thread safety.
-        with self.next_lock:
-            # Readability.
-            account_set = self.sets[set_name]
-
-            # Loop all accounts for a good one.
-            now = default_timer()
-            max_speed_kmph = self.kph
-
-            for i in range(len(account_set)):
-                account = account_set[i]
-
-                # Make sure it's not in use.
-                if account.get('in_use', False):
-                    continue
-
-                # Make sure it's not captcha'd.
-                if account.get('captcha', False):
-                    continue
-
-                # Check if we're below speed limit for account.
-                last_scanned = account.get('last_scanned', False)
-
-                if last_scanned:
-                    seconds_passed = now - last_scanned
-                    old_coords = account.get('last_coords', coords_to_scan)
-
-                    distance_km = equi_rect_distance(
-                        old_coords,
-                        coords_to_scan)
-                    cooldown_time_sec = distance_km / max_speed_kmph * 3600
-
-                    # Not enough time has passed for this one.
-                    if seconds_passed < cooldown_time_sec:
-                        continue
-
-                # We've found an account that's ready.
-                account['last_scanned'] = now
-                account['last_coords'] = coords_to_scan
-                account['in_use'] = True
-
-                return account
-
-        # TODO: Instead of returning False, return the amount of min. seconds
-        # the instance needs to wait until the first account becomes available,
-        # so it doesn't need to keep asking if we know we need to wait.
-        return False

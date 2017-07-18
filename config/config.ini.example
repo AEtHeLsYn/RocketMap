@@ -10,9 +10,6 @@
 ###################
 
 #gmaps-key:                     # Your Google Maps API key
-#auth-service:                  # ptc (default) or google
-#username:                      # Usernames, one per account. (default=[])
-#password:                      # Passwords, either single one for all accounts or one per account. (default=[])
 
 
 # Common settings
