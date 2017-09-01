@@ -15,7 +15,7 @@ Live visualization of all the Pokémon (with option to show gyms and PokéStops)
 * Multithreaded mode
 * Filters
 * Independent worker threads (many can be used simulatenously to quickly generate a livemap of a huge geographical area)
-* Localization (en, fr, pt_br, de, ru, ko, ja, zh_tw, zh_cn, zh_hk)
+* Localization (en, es, fr, pt_br, de, ru, ko, ja, zh_tw, zh_cn, zh_hk)
 * DB storage (sqlite or mysql) of all found Pokémon
 * Incredibly fast, efficient searching algorithm (compared to everything else available)
 
