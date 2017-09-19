@@ -133,6 +133,7 @@ function initMap() { // eslint-disable-line no-unused-vars
             lng: Number(getParameterByName('lon')) || centerLng
         },
         zoom: Number(getParameterByName('zoom')) || Store.get('zoomLevel'),
+        gestureHandling: 'greedy',
         fullscreenControl: true,
         streetViewControl: false,
         mapTypeControl: false,
@@ -2282,6 +2283,7 @@ $(function () {
     /* If push.js is unsupported or disabled, fall back to toastr
      * notifications. */
     Push.config({
+        serviceWorker: 'serviceWorker.min.js',
         fallback: function (notification) {
             sendToastrPokemonNotification(
                 notification.title,
