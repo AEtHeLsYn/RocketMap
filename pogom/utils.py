@@ -379,9 +379,6 @@ def get_args():
     parser.add_argument('--db-host', help='IP or hostname for the database.')
     parser.add_argument(
         '--db-port', help='Port for the database.', type=int, default=3306)
-    parser.add_argument('--db-max_connections',
-                        help='Max connections (per thread) for the database.',
-                        type=int, default=5)
     parser.add_argument('--db-threads',
                         help=('Number of db threads; increase if the db ' +
                               'queue falls behind.'),
@@ -400,7 +397,7 @@ def get_args():
         help=('Defines the type of messages to send to webhooks.'),
         choices=[
             'pokemon', 'gym', 'raid', 'egg', 'tth', 'gym-info',
-            'pokestop', 'lure'
+            'pokestop', 'lure', 'captcha'
         ],
         action='append',
         default=[])
