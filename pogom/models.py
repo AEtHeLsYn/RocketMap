@@ -2025,7 +2025,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
             pokemon_info = False
             if args.encounter and (pokemon_id in args.enc_whitelist):
                 pokemon_info = encounter_pokemon(
-                    args, p, account, api, account_sets, status, key_scheduler)
+                    args, p, account, api, account_sets, status, 
+                    key_scheduler, step_location)
 
             pokemon[p.encounter_id] = {
                 'encounter_id': b64encode(str(p.encounter_id)),
@@ -2352,7 +2353,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
 
 
 def encounter_pokemon(args, pokemon, account, api, account_sets, status,
-                      key_scheduler):
+                      key_scheduler, step_location):
     using_accountset = False
     hlvl_account = None
     pokemon_id = None
@@ -2360,7 +2361,7 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
     try:
         hlvl_api = None
         pokemon_id = pokemon.pokemon_data.pokemon_id
-        scan_location = [pokemon.latitude, pokemon.longitude]
+        scan_location = [step_location[0], step_location[1]]
         # If the host has L30s in the regular account pool, we
         # can just use the current account.
         if account['level'] >= 30:
