@@ -1287,13 +1287,14 @@ def get_api_version(args):
     """
     proxies = {}
 
+    '''
     if args.proxy and args.proxy_usage != 'ptc':
         num, proxy = get_new_proxy(args)
         proxies = {
             'http': proxy,
             'https': proxy
         }
-
+    '''
     try:
         s = requests.Session()
         s.mount('https://',
