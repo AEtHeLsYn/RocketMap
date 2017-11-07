@@ -12,7 +12,7 @@ from pgoapi.exceptions import AuthException
 
 from .fakePogoApi import FakePogoApi
 from .pgoapiwrapper import PGoApiWrapper
-from .utils import in_radius, generate_device_info, distance
+from .utils import in_radius, generate_device_info  # , distance
 from .proxy import get_new_proxy
 from .apiRequests import (send_generic_request, fort_details,
                           recycle_inventory_item, use_item_egg_incubator,
@@ -496,8 +496,8 @@ def pokestop_spinnable(fort, step_location):
 
 def spin_pokestop(api, account, args, fort, step_location):
     if not can_spin(account, args.account_max_spins):
-        log.warning('Account %s has reached its Pokestop spinning limits.',
-                    account['username'])
+        log.debug('Account %s has reached its Pokestop spinning limits.',
+                  account['username'])
         return False
     # Set 50% Chance to spin a Pokestop.
     if random.random() > 0.5 or account['level'] == 1:
@@ -708,6 +708,7 @@ class AccountSet(object):
                 if account.get('captcha', False):
                     continue
 
+                '''
                 # Check if we're below speed limit for account.
                 last_scanned = account.get('last_scanned', False)
 
@@ -721,6 +722,7 @@ class AccountSet(object):
                     # Not enough time has passed for this one.
                     if seconds_passed < cooldown_time_sec:
                         continue
+                '''
 
                 # We've found an account that's ready.
                 account['last_scanned'] = now

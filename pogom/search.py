@@ -47,7 +47,7 @@ from .utils import now, distance
 from .transform import get_new_coords
 from .account import setup_api, check_login, AccountSet
 from .captcha import captcha_overseer_thread, handle_captcha
-from .proxy import get_new_proxy
+# from .proxy import get_new_proxy
 from .apiRequests import gym_get_info, get_map_objects as gmo
 
 log = logging.getLogger(__name__)

@@ -2025,7 +2025,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue,
             pokemon_info = False
             if args.encounter and (pokemon_id in args.enc_whitelist):
                 pokemon_info = encounter_pokemon(
-                    args, p, account, api, account_sets, status, 
+                    args, p, account, api, account_sets, status,
                     key_scheduler, step_location)
 
             pokemon[p.encounter_id] = {
@@ -2367,12 +2367,12 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
         if account['level'] >= 30:
             hlvl_account = account
             hlvl_api = api
+            # If account is from regular pool, apply delay
+            time.sleep(args.encounter_delay)
         else:
             # Get account to use for IV and CP scanning.
             hlvl_account = account_sets.next('30', scan_location)
             using_accountset = True
-
-        time.sleep(args.encounter_delay)
 
         # If we didn't get an account, we can't encounter.
         if not hlvl_account:
@@ -2468,17 +2468,17 @@ def encounter_pokemon(args, pokemon, account, api, account_sets, status,
 
                 result = pokemon_info
 
+                # We're done with the encounter. If it's from an
+                # AccountSet, release account back to the pool.
+                if using_accountset:
+                    account_sets.release(hlvl_account)
+
     except Exception as e:
         log.exception('There was an error encountering Pokemon ID %s with ' +
                       'account %s: %s.',
                       pokemon_id,
                       hlvl_account['username'],
                       e)
-
-    # We're done with the encounter. If it's from an
-    # AccountSet, release account back to the pool.
-    if using_accountset:
-        account_sets.release(hlvl_account)
 
     return result
 
