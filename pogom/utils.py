@@ -31,6 +31,24 @@ def parse_unicode(bytestring):
     return decoded_string
 
 
+def read_pokemon_ids_from_file(f):
+    pokemon_ids = set()
+    for name in f:
+        name = name.strip()
+        # Lines starting with # or - mean: skip this Pokemon
+        if name[0] in ('#', '-'):
+            continue
+        try:
+            # Pokemon can be given as Pokedex ID
+            pid = int(name)
+        except ValueError:
+            # Perform the usual name -> ID lookup
+            pid = get_pokemon_id(unicode(name, 'utf-8'))
+        if pid and not pid == -1:
+            pokemon_ids.add(pid)
+    return sorted(pokemon_ids)
+
+
 def memoize(function):
     memo = {}
 
@@ -175,7 +193,7 @@ def get_args():
                         'webhooks or saved to the DB.')
     parser.add_argument('-encwf', '--enc-whitelist-file',
                         default='', help='File containing a list of '
-                        'Pokemon IDs to encounter for'
+                        'Pokemon IDs or names to encounter for'
                         ' IV/CP scanning. One line per ID.')
     parser.add_argument('-nostore', '--no-api-store',
                         help=("Don't store the API objects used by the high"
@@ -497,6 +515,8 @@ def get_args():
                          help=('Show debug messages from RocketMap ' +
                                'and pgoapi.'),
                          type=int, dest='verbose')
+    parser.add_argument('-pgsu', '--pgscout-url', default=None,
+                        help='URL to query PGScout for Pokemon IV/CP.')
     parser.set_defaults(DEBUG=False)
 
     args = parser.parse_args()
@@ -719,13 +739,22 @@ def get_args():
 
                     args.accounts_L30.append(hlvl_account)
 
+        # Normalize PGScout URL
+        if args.pgscout_url:
+            # Remove trailing slashes
+            if args.pgscout_url.endswith('/'):
+                args.pgscout_url = args.pgscout_url[:len(args.pgscout_url) - 1]
+            # Add /iv if needed
+            if not args.pgscout_url.endswith('/iv'):
+                args.pgscout_url = '{}/iv'.format(args.pgscout_url)
+
         # Prepare the IV/CP scanning filters.
         args.enc_whitelist = []
 
         # IV/CP scanning.
         if args.enc_whitelist_file:
             with open(args.enc_whitelist_file) as f:
-                args.enc_whitelist = frozenset([int(l.strip()) for l in f])
+                args.enc_whitelist = read_pokemon_ids_from_file(f)
 
         # Make max workers equal number of accounts if unspecified, and disable
         # account switching.
@@ -859,6 +888,19 @@ def get_pokemon_data(pokemon_id):
         with open(file_path, 'r') as f:
             get_pokemon_data.pokemon = json.loads(f.read())
     return get_pokemon_data.pokemon[str(pokemon_id)]
+
+
+def get_pokemon_id(pokemon_name):
+    if not hasattr(get_pokemon_id, 'ids'):
+        if not hasattr(get_pokemon_data, 'pokemon'):
+            # initialize from file
+            get_pokemon_data(1)
+
+        get_pokemon_id.ids = {}
+        for pokemon_id, data in get_pokemon_data.pokemon.iteritems():
+            get_pokemon_id.ids[data['name']] = int(pokemon_id)
+
+    return get_pokemon_id.ids.get(pokemon_name, -1)
 
 
 def get_pokemon_name(pokemon_id):
