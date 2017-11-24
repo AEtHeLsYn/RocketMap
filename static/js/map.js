@@ -630,11 +630,9 @@ function pokemonLabel(item) {
               <div class='pokemon'>
                 Moveset: <span class='pokemon encounter'>${pMove1}/${pMove2}</span>
               </div>
-              ${movesetRating}
               <div class='pokemon'>
                 Weight: ${weight.toFixed(2)}kg | Height: ${height.toFixed(2)}m
               </div>
-              ${catchProbs}
               <div>
                 <span class='pokemon navigate'><a href='javascript:void(0);' onclick='javascript:openMapDirections(${latitude},${longitude});' title='Open in Google Maps'>${latitude.toFixed(6)}, ${longitude.toFixed(7)}</a></span>
               </div>
@@ -651,7 +649,6 @@ function pokemonLabel(item) {
             <span class='pokemon links exclude'><a href='javascript:excludePokemon(${id})'>Exclude</a></span>
             <span class='pokemon links notify'><a href='javascript:notifyAboutPokemon(${id})'>Notify</a></span>
             <span class='pokemon links remove'><a href='javascript:removePokemonMarker("${encounterId}")'>Remove</a></span>
-            <span class='pokemon links scout'><a href='javascript:scout("${encounterId}")'>Scout</a></span>
           </div>
       </div>
       <div class='pokemon container content-right'>
